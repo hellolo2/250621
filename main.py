@@ -1,15 +1,28 @@
 import streamlit as st
+from streamlit_lottie import st_lottie
+import requests
 
+# ------------------------------------
+# 🎬 Lottie 애니메이션 로더
+def load_lottie_url(url):
+    r = requests.get(url)
+    if r.status_code != 200:
+        return None
+    return r.json()
+
+# ------------------------------------
 # 🌈 페이지 설정
 st.set_page_config(page_title="MBTI 성격 & 궁합 분석기 💖", page_icon="🌟", layout="wide")
 
+# ------------------------------------
 # 🎉 타이틀
 st.markdown("""
-    <h1 style='text-align: center; color: #ff69b4;'>✨ MBTI 성격 분석 & 궁합 추천 ✨</h1>
-    <h4 style='text-align: center; color: #6a0dad;'>MBTI로 나를 알고, 찰떡 궁합도 확인해보세요! 💫</h4>
+    <h1 style='text-align: center; color: #ff69b4;'>🌟 MBTI 성격 분석기 & 궁합 추천 🌟</h1>
+    <h4 style='text-align: center; color: #8a2be2;'>MBTI로 나를 알고, 친구와의 궁합까지 확인해보세요! 🔍💞</h4>
 """, unsafe_allow_html=True)
 
-# 🎭 MBTI 선택
+# ------------------------------------
+# 🎭 MBTI 리스트
 mbti_list = [
     "ISTJ 🛠️", "ISFJ 🧸", "INFJ 🌌", "INTJ 🧠",
     "ISTP 🧪", "ISFP 🎨", "INFP 📚", "INTP 🔍",
@@ -19,29 +32,31 @@ mbti_list = [
 mbti_selected = st.selectbox("📌 당신의 MBTI를 선택하세요:", mbti_list)
 mbti_code = mbti_selected.split(" ")[0]
 
-# 📘 성격 설명
+# ------------------------------------
+# 📘 MBTI 성격 설명
 mbti_traits = {
-    "ISTJ": "📚 조용하고 신중하며 책임감이 강해요. 체계적이고 신뢰할 수 있는 관리자 스타일!",
-    "ISFJ": "🧸 따뜻하고 헌신적인 보호자예요. 남을 잘 챙기고 협력적인 성향이 강해요!",
-    "INFJ": "🌌 통찰력 있고 창의적인 조용한 이상주의자예요. 세상을 더 좋게 만들고 싶어 해요!",
-    "INTJ": "🧠 독립적이고 분석적인 전략가예요. 목표 지향적이고 효율성을 중요시해요!",
-    "ISTP": "🛠️ 현실적이고 논리적인 탐험가예요. 즉흥적이며 손재주가 뛰어나요!",
-    "ISFP": "🎨 감성적이고 조용한 예술가예요. 감정이 풍부하고 자연을 사랑해요!",
-    "INFP": "📚 이상과 가치 중심의 중재자예요. 깊이 있는 감성과 상상력을 갖고 있어요!",
-    "INTP": "🔍 지적인 탐험가예요. 호기심이 많고 새로운 아이디어를 추구해요!",
-    "ESTP": "🏍️ 활동적이고 에너지 넘치는 해결사예요. 직접 뛰어드는 걸 좋아해요!",
-    "ESFP": "🎤 삶을 즐기며 사람들과 어울리는 걸 좋아하는 자유로운 영혼이에요!",
-    "ENFP": "🚀 창의적이고 열정적인 활동가예요. 새로운 것에 대한 열망이 넘쳐요!",
-    "ENTP": "💡 아이디어가 넘치는 토론가예요. 빠르게 사고하고 말도 잘해요!",
-    "ESTJ": "📋 조직적이고 현실적인 리더예요. 책임감 있고 실용적이에요!",
-    "ESFJ": "🤝 따뜻하고 친절한 외교관이에요. 모두가 잘 지내도록 도와줘요!",
-    "ENFJ": "🕊️ 리더십 있고 헌신적인 사람입니다. 타인의 잠재력을 끌어내요!",
-    "ENTJ": "👑 대담하고 효율적인 지휘관이에요. 야망 있고 목표 중심이에요!"
+    "ISTJ": "💼 책임감 강하고 현실적인 관리자 스타일. 정해진 규칙과 시스템을 잘 따르며 계획적인 성격!",
+    "ISFJ": "🧸 배려심 깊고 조용하지만 친절한 도우미. 타인을 챙기며 헌신적인 성향이 돋보여요!",
+    "INFJ": "🌌 깊이 있는 사고와 통찰력을 가진 조용한 비전가. 이상주의자이며 사람들을 도우려는 성향이 강해요!",
+    "INTJ": "🧠 논리적이고 전략적인 마스터마인드. 미래를 내다보는 계획 능력이 뛰어나요!",
+    "ISTP": "🔧 즉흥적이지만 침착한 탐험가. 문제 해결에 강하고 손재주가 뛰어난 성격이에요!",
+    "ISFP": "🎨 예술 감각이 풍부하고 조용한 자유인. 평화를 사랑하고 감정이 풍부해요!",
+    "INFP": "📚 이상주의자이자 감성적인 중재자. 깊은 공감능력을 갖춘 아름다운 영혼!",
+    "INTP": "🔍 호기심 많은 사색가. 새로운 아이디어와 이론 탐구를 좋아해요!",
+    "ESTP": "🏍️ 에너지 넘치는 활동가. 현실적인 문제를 즉시 해결하며 모험을 즐겨요!",
+    "ESFP": "🎤 무대 위 스타. 삶을 즐기고 주변에 긍정 에너지를 퍼뜨리는 분위기 메이커!",
+    "ENFP": "🚀 자유로운 영혼의 열정가. 창의적이고 사람들과 함께할 때 에너지를 얻어요!",
+    "ENTP": "💡 아이디어 뱅크. 빠른 사고와 논쟁을 즐기는 창의적인 혁신가!",
+    "ESTJ": "📋 체계적이고 실용적인 리더. 조직적이고 책임감이 뛰어난 스타일!",
+    "ESFJ": "🤝 친절하고 협동적인 사람. 조화를 중요시하고 타인을 잘 챙겨요!",
+    "ENFJ": "🕊️ 따뜻한 카리스마 리더. 사람들을 이끄는 데 능숙하고 배려심이 깊어요!",
+    "ENTJ": "👑 전략적이고 결단력 있는 지도자. 도전 정신과 야망이 넘치는 카리스마!"
 }
 
-# 💕 궁합 추천
+# ------------------------------------
+# 💞 궁합 추천
 mbti_compatibility = {
-    "ISTJ": ["ISFP 🎨", "ESFP 🎤"],
+    "ISTJ": ["ESFP 🎤", "ISFP 🎨"],
     "ISFJ": ["ESTP 🏍️", "ESFP 🎤"],
     "INFJ": ["ENFP 🚀", "INFP 📚"],
     "INTJ": ["ENFP 🚀", "ENTP 💡"],
@@ -59,24 +74,32 @@ mbti_compatibility = {
     "ENTJ": ["INTP 🔍", "ENFP 🚀"]
 }
 
+# ------------------------------------
+# 🎨 애니메이션
+lottie_url = "https://assets7.lottiefiles.com/packages/lf20_xlmz9xwm.json"
+lottie_json = load_lottie_url(lottie_url)
+
+st_lottie(lottie_json, height=300, key="mbti_lottie")
+
+# ------------------------------------
 # 📋 출력
 st.markdown("---")
-st.subheader(f"🔍 {mbti_selected}의 성격 분석")
+st.subheader(f"🧠 {mbti_selected}의 성격 분석")
 
 st.markdown(f"""
-### {mbti_traits[mbti_code]}
+### {mbti_traits[mbti_code]}  
 """)
 
-st.markdown("### 💞 어울리는 궁합 MBTI:")
-
+st.markdown("### 💞 어울리는 MBTI 궁합 추천:")
 for pair in mbti_compatibility.get(mbti_code, []):
     st.markdown(f"- {pair}")
 
+# ------------------------------------
 # 👣 하단
 st.markdown("""
     <hr>
     <div style='text-align: center; font-size: 18px;'>
-        🎯 <b>MBTI 궁합으로 친구, 연인, 동료까지 더 잘 이해해요!</b><br>  
-        💖 심리 기반 소통으로 행복한 관계를 만들어보세요!
+        💡 <b>MBTI 궁합으로 관계를 더 가깝게!</b>  
+        <br>🔮 나를 알고, 서로를 이해하는 시간 🌈
     </div>
 """, unsafe_allow_html=True)

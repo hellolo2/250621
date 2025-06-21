@@ -1,64 +1,106 @@
 import streamlit as st
+from pydrive.auth import GoogleAuth
+from pydrive.drive import GoogleDrive
 import gpxpy
-import folium
-from streamlit_folium import st_folium
-import requests
-from io import BytesIO
+import simplekml
+import tempfile
+import re
 
-st.set_page_config(page_title="마라톤 코스 선택 & 지도 시각화", layout="wide")
-st.title("📅년도 & 🏃‍♂️ 마라톤 코스 선택 후 지도 시각화")
+# 구글 드라이브 인증
+def authenticate():
+    gauth = GoogleAuth()
+    gauth.LocalWebserverAuth()  # OAuth 인증
+    drive = GoogleDrive(gauth)
+    return drive
 
-# 예시: 구글 드라이브에 공개된 GPX 파일들의 URL과 파일명 딕셔너리 (실제 사용 시 여기에 직접 URL과 이름 넣기)
-# 예) "파일명": "공개다운로드링크"
-gpx_files_info = {
-    "2023공주백.gpx": "https://drive.google.com/file/d/1y3V5U9Gk-kcD-6QHRCIGSr_oZE8vmceS/view?usp=drive_link",
-    "2023춘마(실제기록).gpx": "https://drive.google.com/file/d/1erd4Vx71zGEp9knQ3QRQTyWawy7VTRTO/view?usp=drive_link",
-    "2024경기마라톤.gpx": "https://drive.google.com/file/d/1nVh3FN5lohVffUwF3N7WpDrkFNT6HjJ8/view?usp=drive_link"
-    # 더 추가 가능
-}
+# '마라톤 코스' 폴더 ID 찾기 (폴더명으로 검색)
+def find_marathon_folder_id(drive):
+    file_list = drive.ListFile({'q': "mimeType='application/vnd.google-apps.folder' and title='마라톤 코스' and trashed=false"}).GetList()
+    if len(file_list) == 0:
+        return None
+    return file_list[0]['id']
 
-# 1. 파일명에서 년도, 마라톤 이름 추출
-file_data = []
-for fname in gpx_files_info.keys():
-    if fname.lower().endswith(".gpx"):
-        year = ''.join(filter(str.isdigit, fname[:4]))  # 앞 4글자 중 숫자만 추출, 예: 2024
-        marathon_name = fname[4:].replace(".gpx", "")   # 나머지 부분에서 확장자 제거
-        file_data.append((year, marathon_name, fname))
+# 폴더 내 GPX 파일 목록 가져오기
+def get_gpx_files_in_folder(drive, folder_id):
+    query = f"'{folder_id}' in parents and trashed=false and title contains '.gpx'"
+    file_list = drive.ListFile({'q': query}).GetList()
+    return file_list
 
-# 2. Streamlit 선택 UI
-years = sorted(set([item[0] for item in file_data]))
-selected_year = st.selectbox("📅 년도 선택", options=years)
+# 파일명에서 년도와 마라톤 이름 분리 (예: '2024고양하프.gpx' -> ('2024', '고양하프'))
+def parse_filename(filename):
+    # 확장자 제거
+    base = filename.replace('.gpx', '')
+    # 숫자(년도)와 문자(이름) 분리 (첫 숫자 시퀀스 + 나머지)
+    match = re.match(r'(\d+)(.+)', base)
+    if match:
+        year, marathon_name = match.groups()
+        return year, marathon_name
+    else:
+        return None, None
 
-marathon_names_for_year = [item[1] for item in file_data if item[0] == selected_year]
-selected_marathon = st.selectbox("🏃‍♂️ 마라톤 선택", options=marathon_names_for_year)
-
-# 3. 선택된 파일명 찾기
-selected_file = None
-for y, m_name, fname in file_data:
-    if y == selected_year and m_name == selected_marathon:
-        selected_file = fname
-        break
-
-if selected_file:
-    # 4. GPX 파일 다운로드 & 파싱
-    url = gpx_files_info[selected_file]
-    response = requests.get(url)
-    gpx = gpxpy.parse(BytesIO(response.content))
-
-    coords = []
+# GPX 파일을 KML로 변환
+def gpx_to_kml(gpx_content):
+    gpx = gpxpy.parse(gpx_content)
+    kml = simplekml.Kml()
     for track in gpx.tracks:
         for segment in track.segments:
-            for point in segment.points:
-                coords.append((point.latitude, point.longitude))
+            coords = [(point.longitude, point.latitude) for point in segment.points]
+            kml.newlinestring(name="Marathon Route", coords=coords)
+    return kml.kml()
 
-    if coords:
-        # 지도 생성
-        m = folium.Map(location=coords[0], zoom_start=13)
-        folium.PolyLine(coords, color="blue", weight=5, opacity=0.8, tooltip=f"{selected_year} {selected_marathon}").add_to(m)
+def main():
+    st.title("마라톤 코스 GPX to Google Earth KML 변환기")
 
-        st.subheader("🗺️ 마라톤 코스 지도")
-        st_folium(m, width=800, height=600)
+    drive = authenticate()
+    folder_id = find_marathon_folder_id(drive)
+    if not folder_id:
+        st.error("구글 드라이브에 '마라톤 코스' 폴더를 찾을 수 없습니다.")
+        return
+
+    gpx_files = get_gpx_files_in_folder(drive, folder_id)
+    if not gpx_files:
+        st.warning("폴더에 GPX 파일이 없습니다.")
+        return
+
+    # 파일명에서 년도와 마라톤 이름 리스트 만들기
+    data = []
+    for f in gpx_files:
+        year, marathon_name = parse_filename(f['title'])
+        if year and marathon_name:
+            data.append({'file': f, 'year': year, 'name': marathon_name})
+
+    # 중복 제거 후 년도와 이름 선택 UI 만들기
+    years = sorted(set(item['year'] for item in data))
+    selected_year = st.selectbox("년도 선택", years)
+
+    names = sorted(set(item['name'] for item in data if item['year'] == selected_year))
+    selected_name = st.selectbox("마라톤 이름 선택", names)
+
+    # 선택한 년도와 이름에 맞는 파일 찾기
+    selected_files = [item['file'] for item in data if item['year'] == selected_year and item['name'] == selected_name]
+
+    if selected_files:
+        file = selected_files[0]
+        # 파일 다운로드 및 읽기
+        downloaded = drive.CreateFile({'id': file['id']})
+        gpx_content = downloaded.GetContentString()
+
+        # GPX -> KML 변환
+        kml_str = gpx_to_kml(gpx_content)
+
+        # KML 다운로드 버튼
+        st.download_button(label="KML 파일 다운로드", data=kml_str, file_name=f"{selected_year}_{selected_name}.kml", mime="application/vnd.google-earth.kml+xml")
+
+        # 구글 어스 웹 버전 링크로 KML 경로 보기 안내
+        st.markdown("""
+        **구글 어스 웹에서 KML 보기 방법**  
+        1. [Google Earth 웹](https://earth.google.com/web/) 접속  
+        2. 좌측 메뉴에서 '프로젝트' 선택  
+        3. '불러오기' 클릭 후 다운로드한 KML 파일 업로드  
+        """)
+
     else:
-        st.warning("해당 GPX 파일에서 위치 정보를 찾을 수 없습니다.")
-else:
-    st.info("년도와 마라톤을 선택해주세요.")
+        st.warning("선택한 년도와 이름에 해당하는 파일이 없습니다.")
+
+if __name__ == "__main__":
+    main()

@@ -1,68 +1,82 @@
 import streamlit as st
 
-# -------------------------------
-# 🎨 스타일 설정
-st.set_page_config(
-    page_title="MBTI 직업 추천기 🎓",
-    page_icon="🧬",
-    layout="wide"
-)
+# 🌈 페이지 설정
+st.set_page_config(page_title="MBTI 성격 & 궁합 분석기 💖", page_icon="🌟", layout="wide")
 
-# -------------------------------
-# 🌟 헤더
+# 🎉 타이틀
 st.markdown("""
-    <h1 style='text-align: center; color: #ff69b4;'>🌟 MBTI 기반 진로 추천 사이트 🌟</h1>
-    <h3 style='text-align: center; color: #8a2be2;'>당신의 성격 유형에 딱 맞는 직업은 무엇일까요? 🤔</h3>
+    <h1 style='text-align: center; color: #ff69b4;'>✨ MBTI 성격 분석 & 궁합 추천 ✨</h1>
+    <h4 style='text-align: center; color: #6a0dad;'>MBTI로 나를 알고, 찰떡 궁합도 확인해보세요! 💫</h4>
 """, unsafe_allow_html=True)
 
-# -------------------------------
-# 🎯 MBTI 선택
-mbti_types = [
-    'ISTJ 🛠️', 'ISFJ 🧸', 'INFJ 🌌', 'INTJ 🧠',
-    'ISTP 🧪', 'ISFP 🎨', 'INFP 📚', 'INTP 🔍',
-    'ESTP 🏍️', 'ESFP 🎤', 'ENFP 🚀', 'ENTP 💡',
-    'ESTJ 📋', 'ESFJ 🤝', 'ENFJ 🕊️', 'ENTJ 👑'
+# 🎭 MBTI 선택
+mbti_list = [
+    "ISTJ 🛠️", "ISFJ 🧸", "INFJ 🌌", "INTJ 🧠",
+    "ISTP 🧪", "ISFP 🎨", "INFP 📚", "INTP 🔍",
+    "ESTP 🏍️", "ESFP 🎤", "ENFP 🚀", "ENTP 💡",
+    "ESTJ 📋", "ESFJ 🤝", "ENFJ 🕊️", "ENTJ 👑"
 ]
-mbti = st.selectbox("🎭 당신의 MBTI를 선택하세요:", mbti_types)
+mbti_selected = st.selectbox("📌 당신의 MBTI를 선택하세요:", mbti_list)
+mbti_code = mbti_selected.split(" ")[0]
 
-# -------------------------------
-# 📊 직업 추천 딕셔너리
-jobs = {
-    "ISTJ": ["📊 회계사", "🏢 공무원", "🔧 엔지니어"],
-    "ISFJ": ["🩺 간호사", "📚 사서", "👶 유치원 교사"],
-    "INFJ": ["🧘‍♀️ 심리상담가", "✍️ 작가", "🌱 사회운동가"],
-    "INTJ": ["💻 데이터 사이언티스트", "📈 전략 컨설턴트", "🧪 연구원"],
-    "ISTP": ["🔧 정비사", "🕹️ 게임 디자이너", "🚔 경찰"],
-    "ISFP": ["🎨 일러스트레이터", "🧵 패션 디자이너", "🎶 작곡가"],
-    "INFP": ["📖 시인", "🧝‍♀️ 판타지 작가", "🎭 배우"],
-    "INTP": ["🧬 과학자", "👨‍💻 개발자", "🔬 분석가"],
-    "ESTP": ["🎯 마케터", "🧗 트레이너", "🎮 스트리머"],
-    "ESFP": ["🎤 가수", "📸 유튜버", "🎉 이벤트 플래너"],
-    "ENFP": ["🚀 창업가", "🎈 크리에이터", "🦄 브랜딩 디렉터"],
-    "ENTP": ["💡 아이디어 뱅크", "📢 광고기획자", "🧠 컨셉 디자이너"],
-    "ESTJ": ["📋 관리자", "🛠️ 프로젝트 매니저", "🏗️ 건축 관리자"],
-    "ESFJ": ["👩‍🏫 교사", "🏥 병원 행정직", "👗 쇼핑몰 운영자"],
-    "ENFJ": ["🕊️ NGO 활동가", "🎤 발표자", "👥 HR매니저"],
-    "ENTJ": ["👑 CEO", "📈 투자 분석가", "⚖️ 법률가"],
+# 📘 성격 설명
+mbti_traits = {
+    "ISTJ": "📚 조용하고 신중하며 책임감이 강해요. 체계적이고 신뢰할 수 있는 관리자 스타일!",
+    "ISFJ": "🧸 따뜻하고 헌신적인 보호자예요. 남을 잘 챙기고 협력적인 성향이 강해요!",
+    "INFJ": "🌌 통찰력 있고 창의적인 조용한 이상주의자예요. 세상을 더 좋게 만들고 싶어 해요!",
+    "INTJ": "🧠 독립적이고 분석적인 전략가예요. 목표 지향적이고 효율성을 중요시해요!",
+    "ISTP": "🛠️ 현실적이고 논리적인 탐험가예요. 즉흥적이며 손재주가 뛰어나요!",
+    "ISFP": "🎨 감성적이고 조용한 예술가예요. 감정이 풍부하고 자연을 사랑해요!",
+    "INFP": "📚 이상과 가치 중심의 중재자예요. 깊이 있는 감성과 상상력을 갖고 있어요!",
+    "INTP": "🔍 지적인 탐험가예요. 호기심이 많고 새로운 아이디어를 추구해요!",
+    "ESTP": "🏍️ 활동적이고 에너지 넘치는 해결사예요. 직접 뛰어드는 걸 좋아해요!",
+    "ESFP": "🎤 삶을 즐기며 사람들과 어울리는 걸 좋아하는 자유로운 영혼이에요!",
+    "ENFP": "🚀 창의적이고 열정적인 활동가예요. 새로운 것에 대한 열망이 넘쳐요!",
+    "ENTP": "💡 아이디어가 넘치는 토론가예요. 빠르게 사고하고 말도 잘해요!",
+    "ESTJ": "📋 조직적이고 현실적인 리더예요. 책임감 있고 실용적이에요!",
+    "ESFJ": "🤝 따뜻하고 친절한 외교관이에요. 모두가 잘 지내도록 도와줘요!",
+    "ENFJ": "🕊️ 리더십 있고 헌신적인 사람입니다. 타인의 잠재력을 끌어내요!",
+    "ENTJ": "👑 대담하고 효율적인 지휘관이에요. 야망 있고 목표 중심이에요!"
 }
 
-# -------------------------------
-# 🔍 선택한 MBTI에서 코드 추출
-selected_code = mbti.split(" ")[0]
-recommended_jobs = jobs.get(selected_code, [])
+# 💕 궁합 추천
+mbti_compatibility = {
+    "ISTJ": ["ISFP 🎨", "ESFP 🎤"],
+    "ISFJ": ["ESTP 🏍️", "ESFP 🎤"],
+    "INFJ": ["ENFP 🚀", "INFP 📚"],
+    "INTJ": ["ENFP 🚀", "ENTP 💡"],
+    "ISTP": ["ESFJ 🤝", "ISFJ 🧸"],
+    "ISFP": ["ESTJ 📋", "ESFJ 🤝"],
+    "INFP": ["ENFJ 🕊️", "INFJ 🌌"],
+    "INTP": ["ENTP 💡", "INTJ 🧠"],
+    "ESTP": ["ISFJ 🧸", "ESFJ 🤝"],
+    "ESFP": ["ISTJ 🛠️", "ISFJ 🧸"],
+    "ENFP": ["INFJ 🌌", "INTJ 🧠"],
+    "ENTP": ["INTP 🔍", "INFJ 🌌"],
+    "ESTJ": ["ISFP 🎨", "INFP 📚"],
+    "ESFJ": ["ISFP 🎨", "ISTP 🧪"],
+    "ENFJ": ["INFP 📚", "ISFP 🎨"],
+    "ENTJ": ["INTP 🔍", "ENFP 🚀"]
+}
 
-# -------------------------------
-# 🎁 결과 출력
+# 📋 출력
 st.markdown("---")
-st.subheader(f"✨ {mbti} 유형에게 어울리는 직업 ✨")
+st.subheader(f"🔍 {mbti_selected}의 성격 분석")
 
-for job in recommended_jobs:
-    st.markdown(f"### {job}")
+st.markdown(f"""
+### {mbti_traits[mbti_code]}
+""")
 
-# -------------------------------
-# 🎨 하단 꾸미기
+st.markdown("### 💞 어울리는 궁합 MBTI:")
+
+for pair in mbti_compatibility.get(mbti_code, []):
+    st.markdown(f"- {pair}")
+
+# 👣 하단
 st.markdown("""
-    <div style='text-align: center; font-size: 18px; margin-top: 50px;'>
-        Made with ❤️ by <b>진로마스터봇</b> | MBTI로 나를 알아가요! 🌈
+    <hr>
+    <div style='text-align: center; font-size: 18px;'>
+        🎯 <b>MBTI 궁합으로 친구, 연인, 동료까지 더 잘 이해해요!</b><br>  
+        💖 심리 기반 소통으로 행복한 관계를 만들어보세요!
     </div>
 """, unsafe_allow_html=True)

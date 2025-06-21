@@ -1,64 +1,125 @@
-
 import streamlit as st
+
 import yfinance as yf
+
 import pandas as pd
-import plotly.express as px
+
+import plotly.graph_objs as go
+
 from datetime import datetime, timedelta
 
-st.set_page_config(page_title="🌍 글로벌 시가총액 TOP10 주가 분석", layout="wide")
+st.title("글로벌 시가총액 TOP10 기업의 최근 1년간 주가 변화")
 
-st.markdown("""
-# 🌍 글로벌 시가총액 TOP10 💹
-지난 1년간 주요 기업 주가 변화 시각화
-""")
-
-# 🏆 TOP10 기업 리스트 (2025년 기준)
 top10 = {
-    "AAPL": "Apple",
-    "MSFT": "Microsoft",
-    "NVDA": "Nvidia",
-    "AMZN": "Amazon",
-    "GOOGL": "Alphabet",
-    "META": "Meta Platforms",
-    "BRK-B": "Berkshire Hathaway",
-    "TSLA": "Tesla",
-    "AVGO": "Broadcom",
-    "LLY": "Eli Lilly"
+
+    'AAPL': 'Apple',
+
+    'MSFT': 'Microsoft',
+
+    'GOOGL': 'Alphabet (Google)',
+
+    'AMZN': 'Amazon',
+
+    'NVDA': 'Nvidia',
+
+    'META': 'Meta Platforms',
+
+    'BRK-B': 'Berkshire Hathaway',
+
+    'TSLA': 'Tesla',
+
+    'LLY': 'Eli Lilly',
+
+    'TSM': 'TSMC'
+
 }
 
-st.sidebar.header("🔧 설정")
-start_date = st.sidebar.date_input("시작일", datetime.today() - timedelta(days=365))
-end_date = st.sidebar.date_input("종료일", datetime.today())
+st.write("조회 기업:")
 
-if start_date >= end_date:
-    st.sidebar.error("👉 시작일은 종료일보다 빨라야 합니다!")
-    st.stop()
+st.write(", ".join([f"{v}({k})" for k, v in top10.items()]))
 
-# 📊 데이터 다운로드
-@st.cache_data
-def fetch_data(tickers, start, end):
-    data = yf.download(list(tickers), start=start, end=end)["Adj Close"]
-    return data
+end = datetime.today()
 
-data = fetch_data(top10.keys(), start_date, end_date)
+start = end - timedelta(days=365)
 
-# ✅ Plotly 라인차트 생성
-fig = px.line(data, labels={'value': '주가(USD)', 'Date': '날짜'}, title="📈 최근 1년간 종가 추이")
+with st.spinner("데이터를 가져오고 있습니다..."):
 
-fig.update_layout(legend_title_text="기업", legend=dict(orientation="h", y=-0.2), hovermode="x unified")
+    data = yf.download(list(top10.keys()), start=start, end=end, group_by='ticker', auto_adjust=True)
+
+# 데이터 구조 자동 감지
+
+if isinstance(data.columns, pd.MultiIndex):
+
+    # 야후파이낸스 종목 여러 개 → MultiIndex
+
+    # 구조 확인: 보통 ('AAPL', 'Adj Close'), ...
+
+    # level 0: 티커, level 1: 속성
+
+    if "Adj Close" in data.columns.get_level_values(1):
+
+        # 각 티커별 "Adj Close"만 추출
+
+        adj_close = pd.DataFrame({ticker: data[ticker]['Adj Close'] for ticker in top10 if ticker in data.columns.get_level_values(0)})
+
+    elif "Close" in data.columns.get_level_values(1):
+
+        adj_close = pd.DataFrame({ticker: data[ticker]['Close'] for ticker in top10 if ticker in data.columns.get_level_values(0)})
+
+    else:
+
+        st.error("데이터에서 'Adj Close' 또는 'Close' 값을 찾을 수 없습니다.")
+
+        st.write(data.head())
+
+        st.stop()
+
+else:
+
+    # 단일 컬럼 (종목 1개 등) 혹은 Wide-Format
+
+    if "Adj Close" in data.columns:
+
+        adj_close = data["Adj Close"].to_frame()
+
+    elif "Close" in data.columns:
+
+        adj_close = data["Close"].to_frame()
+
+    else:
+
+        st.error("데이터에서 'Adj Close' 또는 'Close' 값을 찾을 수 없습니다.")
+
+        st.write(data.head())
+
+        st.stop()
+
+adj_close = adj_close.fillna(method="ffill")
+
+fig = go.Figure()
+
+for ticker, name in top10.items():
+
+    if ticker in adj_close.columns:
+
+        fig.add_trace(go.Scatter(
+
+            x=adj_close.index, y=adj_close[ticker], mode='lines', name=name
+
+        ))
+
+fig.update_layout(
+
+    title='글로벌 시가총액 TOP10 기업 주가 변화 (최근 1년)',
+
+    xaxis_title='날짜',
+
+    yaxis_title='종가(USD)',
+
+    legend_title='기업명',
+
+    height=600
+
+)
 
 st.plotly_chart(fig, use_container_width=True)
-
-# 📋 요약 테이블 (최근 주가, 1년 전 대비 성과)
-latest = data.iloc[-1]
-one_year_ago = data.iloc[0]
-change = (latest - one_year_ago) / one_year_ago * 100
-summary = pd.DataFrame({
-    "기업": [top10[t] for t in data.columns],
-    "티커": data.columns,
-    "최근 종가": latest.values,
-    "1년 전 대비 상승률 (%)": change.values
-}).round(2).sort_values("1년 전 대비 상승률 (%)", ascending=False)
-
-st.header("📋 요약 성과")
-st.dataframe(summary, use_container_width=True)

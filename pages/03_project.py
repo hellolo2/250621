@@ -11,9 +11,9 @@ st.title("📅년도 & 🏃‍♂️ 마라톤 코스 선택 후 지도 시각�
 # 예시: 구글 드라이브에 공개된 GPX 파일들의 URL과 파일명 딕셔너리 (실제 사용 시 여기에 직접 URL과 이름 넣기)
 # 예) "파일명": "공개다운로드링크"
 gpx_files_info = {
-    "2024고양하프.gpx": "https://drive.google.com/uc?export=download&id=드라이브파일ID1",
-    "2023서울마라톤.gpx": "https://drive.google.com/uc?export=download&id=드라이브파일ID2",
-    "2024부산마라톤.gpx": "https://drive.google.com/uc?export=download&id=드라이브파일ID3",
+    "2023공주백.gpx": "https://drive.google.com/file/d/1y3V5U9Gk-kcD-6QHRCIGSr_oZE8vmceS/view?usp=drive_link",
+    "2023춘마(실제기록).gpx": "https://drive.google.com/file/d/1erd4Vx71zGEp9knQ3QRQTyWawy7VTRTO/view?usp=drive_link",
+    "2024경기마라톤.gpx": "https://drive.google.com/file/d/1nVh3FN5lohVffUwF3N7WpDrkFNT6HjJ8/view?usp=drive_link"
     # 더 추가 가능
 }
 

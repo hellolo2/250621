@@ -1,46 +1,32 @@
 import streamlit as st
-from streamlit_lottie import st_lottie
-import requests
 
-# ------------------------------------
-# 🎬 애니메이션 로딩 함수
-def load_lottie_url(url):
-    r = requests.get(url)
-    if r.status_code != 200:
-        return None
-    return r.json()
-
-# ------------------------------------
-# 🌈 페이지 설정
+# -------------------------------
+# 🎨 스타일 설정
 st.set_page_config(
-    page_title="MBTI 진로 추천기 💼",
+    page_title="MBTI 직업 추천기 🎓",
     page_icon="🧬",
     layout="wide"
 )
 
-# ------------------------------------
-# 💖 타이틀
+# -------------------------------
+# 🌟 헤더
 st.markdown("""
     <h1 style='text-align: center; color: #ff69b4;'>🌟 MBTI 기반 진로 추천 사이트 🌟</h1>
-    <h3 style='text-align: center; color: #8a2be2;'>성격 유형에 맞는 꿈을 찾아볼까요? ✨</h3>
+    <h3 style='text-align: center; color: #8a2be2;'>당신의 성격 유형에 딱 맞는 직업은 무엇일까요? 🤔</h3>
 """, unsafe_allow_html=True)
 
-# ------------------------------------
-# 🎭 MBTI 선택
+# -------------------------------
+# 🎯 MBTI 선택
 mbti_types = [
     'ISTJ 🛠️', 'ISFJ 🧸', 'INFJ 🌌', 'INTJ 🧠',
     'ISTP 🧪', 'ISFP 🎨', 'INFP 📚', 'INTP 🔍',
     'ESTP 🏍️', 'ESFP 🎤', 'ENFP 🚀', 'ENTP 💡',
     'ESTJ 📋', 'ESFJ 🤝', 'ENFJ 🕊️', 'ENTJ 👑'
 ]
-mbti = st.selectbox("📌 당신의 MBTI를 선택하세요:", mbti_types)
+mbti = st.selectbox("🎭 당신의 MBTI를 선택하세요:", mbti_types)
 
-# ------------------------------------
-# 🔍 선택한 MBTI 코드 추출
-selected_code = mbti.split(" ")[0]
-
-# ------------------------------------
-# 🎁 직업 추천 리스트
+# -------------------------------
+# 📊 직업 추천 딕셔너리
 jobs = {
     "ISTJ": ["📊 회계사", "🏢 공무원", "🔧 엔지니어"],
     "ISFJ": ["🩺 간호사", "📚 사서", "👶 유치원 교사"],
@@ -60,36 +46,23 @@ jobs = {
     "ENTJ": ["👑 CEO", "📈 투자 분석가", "⚖️ 법률가"],
 }
 
+# -------------------------------
+# 🔍 선택한 MBTI에서 코드 추출
+selected_code = mbti.split(" ")[0]
 recommended_jobs = jobs.get(selected_code, [])
 
-# ------------------------------------
-# ✨ 애니메이션 선택
-if selected_code in ["INFP", "INFJ", "ISFP", "ENFP"]:
-    lottie_url = "https://assets3.lottiefiles.com/packages/lf20_j1adxtyb.json"  # 감성적
-elif selected_code in ["INTJ", "INTP", "ENTJ"]:
-    lottie_url = "https://assets2.lottiefiles.com/packages/lf20_gnb0jsok.json"  # 분석적
-else:
-    lottie_url = "https://assets4.lottiefiles.com/packages/lf20_kkflmtur.json"  # 일반 환영
-
-lottie_json = load_lottie_url(lottie_url)
-
-# ------------------------------------
-# 💫 애니메이션 출력
-st_lottie(lottie_json, height=300, key="mbti_anim")
-
-# ------------------------------------
-# 🎯 추천 결과 출력
+# -------------------------------
+# 🎁 결과 출력
 st.markdown("---")
-st.subheader(f"💼 {mbti} 유형에게 어울리는 직업 추천")
+st.subheader(f"✨ {mbti} 유형에게 어울리는 직업 ✨")
 
 for job in recommended_jobs:
     st.markdown(f"### {job}")
 
-# ------------------------------------
-# 👣 하단 안내
+# -------------------------------
+# 🎨 하단 꾸미기
 st.markdown("""
-    <hr>
-    <div style='text-align: center; font-size: 18px;'>
-        Made with ❤️ by <b>진로마스터봇</b> | 당신의 미래를 함께 응원해요! 🌈
+    <div style='text-align: center; font-size: 18px; margin-top: 50px;'>
+        Made with ❤️ by <b>진로마스터봇</b> | MBTI로 나를 알아가요! 🌈
     </div>
 """, unsafe_allow_html=True)

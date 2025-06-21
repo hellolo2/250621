@@ -4,7 +4,7 @@ import pandas as pd
 st.title("대기질 데이터 간단 탐색기")
 
 # CSV 파일 URL (로그인 없이 바로 접근 가능한 공개 URL)
-csv_url = "https://github.com/datasciencedojo/datasets/raw/master/airquality.csv"
+csv_url = "https://github.com/250621/seoul cultural space.csv"
 
 @st.cache_data
 def load_data():
